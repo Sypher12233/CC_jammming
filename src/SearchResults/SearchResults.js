@@ -1,8 +1,9 @@
-// import styles from "./SearchResults.module.css";
+import React from "react";
 
 function SearchResults() {
   return (
-    <div className="App">
+    <div className="SearchResults">
+      {/* <!-- Add a TrackList component --> */}
     </div>
   );
 }

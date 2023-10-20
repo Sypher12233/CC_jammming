@@ -1,9 +1,8 @@
-// import styles from "./Playlist.module.css";
+import React from "react";
 
 function Playlist() {
   return (
-    <div>
-    </div>
+    <div className="Playlist">{/* <!-- Add a TrackList component --> */}</div>
   );
 }
 

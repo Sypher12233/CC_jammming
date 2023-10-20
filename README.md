@@ -11,7 +11,7 @@ To achieve this, you will create a boilerplate react app, remove unused files, a
 2. Create a new React application in a directory called Jammming.
 3. In index.html, update the «title> value to Jammming.
 4. Remove App.test.js and logo.svg from the src/ folder, as you will not use them in this project.
-5. Add reset.css to the public/ directory and link to it in index.html.
+5. Add [reset.css](./public/reset.css) to the public/ directory and link to it in index.html.
 6. Link to the following Google fonts in index.html:
 • Poppins
 7. Update favicon.ico with this image.
@@ -21,22 +21,26 @@ To achieve this, you will create a boilerplate react app, remove unused files, a
 8. In this section, you will create a JavaScript file and a CSS file for each of six components in the Jammming app. In the steps below, we will link to the raw HTML templates and CSS to help you write the JSX for each component.
 In the HTML, we use comments to indicate where the JSX for one component renders another component.
 The HTML and CSS for each of the six components are listed below:
-• App - HTML and CSS
-• SearchBar - HTML and CSS
-• SearchResults - HTML and CSS
-• Playlist - HTML and CSS
-• TrackList - HTML and CSS
-• Track - HTML and CSS
+
+* App - [HTML](./src/template/App.txt) and [CSS](./src/App/App.module.css)
+* SearchBar - [HTML](./src/template/SearchBar.txt) and [CSS](./src/SearchBar/SearchBar.module.css)
+* SearchResults - [HTML](./src/template/SearchResults.txt) and [CSS](./src/SearchResults/SearchResults.module.css)
+* Playlist - [HTML](./src/template/Playlist.txt) and [CSS](./src/Playlist/Playlist.module.css)
+* TrackList - [HTML](./src/template/Tracklist.txt) and [CSS](./src/Tracklist/Tracklist.module.css)
+* Track - [HTML](./src/template/Track.txt) and [CSS](./src/Track/Track.module.css)
+
 We'll walk through each implementing each component from the templates provided in future steps.
 
 9. Create a src/Components directory to hold the components.
 10. Create a directory called App/ in the Components/ directory.
 Move App.js and App.css to the App/ folder and update the path in index.js accordingly.
 Additionally add this background image to the directory as well - it is used by the CSS file.
-11. Inside of the App.js .render) method, add a return statement with JSX that renders this HTML.
+11. Inside of the App.js .render() method, add a return statement with JSX that renders this HTML.
 Follow the guidelines below when you write the HTML (linked above) as JSX:
-• Change all class attributes to className.
-• Do not change the class values, as we will use them in a later step to add style.
+
+* Change all class attributes to **className**.
+* Do not change the class values, as we will use them in a later step to add style.
+
 12. Use the comments in the HTML document from the last step to determine the components you need to import into App.js.
 Note, you will create a folder for each component. The JavaScript file and CSS files for each component will live in the component's folder. The folder, JavaScript file, and CSS file will all have the same name.
 13. Add this CSS to the App.css file.
