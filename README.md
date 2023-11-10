@@ -9,7 +9,7 @@
     To achieve this, you will create a boilerplate react app, remove unused files, and add reset.css, Google font links, and an updated favicon.
 
     * Google fonts - [Poppins](https://fonts.google.com/specimen/Poppins?query=poppins) and [Work Sans](https://fonts.google.com/specimen/Work+Sans?query=work)
-    * Updated favicon
+    * Updated [favicon](https://jammingyoutube.surge.sh/favicon.ico)
 
 2. Create a new React application in a directory called Jammming.
 3. In `index.html`, update the `<title>` value to Jammming.
@@ -475,7 +475,7 @@ The HTML and CSS for each of the six components are listed below:
     npm install --global surge
     ```
 
-92. Before you deploy. you need to think of a domain name with the following format:
+92. BEFORE YOU PROCEED, you need to think of a domain name with the following format:
 
     ```text
     SOME_NAME.surge.sh
@@ -483,18 +483,24 @@ The HTML and CSS for each of the six components are listed below:
 
     `SOME_NAME` can be replaced with anything you like
 
-    Next, you need to replace or add this URI to two locations in your project
+    Next, you need to replace or add this URI to **two** locations in your project (make sure to add the `https://` before your domain name in both locations)
 
-    * In `Spotify.js` set redirectURI to your new domain
+    FOR EXAMPLE
+
+    ```TEXT
+    https://SOME_NAME.surge.sh
+    ```
+
+    * In **Spotify.js** set `redirectURI` to your new domain
     * In your Spotify application, add your new domain as a redirect URI
 
-92. Back in the command line. from the Jammming project's root directory, run
+93. Back in the command line. from the Jammming project's root directory, run
 
     ```zsh
     npm run build
     ```
 
-93. cd into the build directory and run the command
+94. cd into the build directory and run the command
 
     ```zsh
     § surge
