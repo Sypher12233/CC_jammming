@@ -27,7 +27,7 @@
 In the HTML, we use comments to indicate where the JSX for one component renders another component.
 The HTML and CSS for each of the six components are listed below:
 
-    * App - [HTML](./src/template/App.txt) and [CSS](./src/ComponentsApp/App.module.css)
+    * App - [HTML](./src/template/App.txt) and [CSS](./src/Components/App/App.module.css)
     * SearchBar - [HTML](./src/template/SearchBar.txt) and [CSS](./src/Components/SearchBar/SearchBar.module.css)
     * SearchResults - [HTML](./src/template/SearchResults.txt) and [CSS](./src/Components/SearchResults/SearchResults.module.css)
     * Playlist - [HTML](./src/template/Playlist.txt) and [CSS](./src/Components/Playlist/Playlist.module.css)
