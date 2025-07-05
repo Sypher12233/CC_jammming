@@ -333,9 +333,24 @@ The HTML and CSS for each of the six components are listed below:
 
 74. If the access token is not already set, check the URL to see if it has just been obtained.
 
-    Since we will be using the [implicit Grant Flow](https://developer.spotify.com/documentation/web-api/tutorials/implicit-flow) to setup a user's account, and make requests.
+    Since we will be using the [Application Code Flow with PKCE](https://developer.spotify.com/documentation/web-api/tutorials/code-pkce-flow) (as implicit Grant Flow is now deprecated) to setup a user's account, and make requests.
 
-    **The implicit grant flow returns a user's access token in the URL.**
+> How PKCE flow works using real-world analogy:
+
+    1. We (our app) build a secret key (code verifier),
+    2. a padlock (code challenge)
+
+    --------------
+
+    3. We send the padlock (code challenge) to Spotify with the Auth request
+    5. Spotify stores that padlock (code challenge) sends back a code in the url
+    6. We send back the code that we just received along with our secret key(code verifier)
+
+    --------------
+    
+    7. Spotify can now open (verify) the padlock (code challenge) using the secret key (code verifier)
+
+* When we make our first request for authentication to Spotify, we send that code
 
     Use the following code to parse the URL and set values for your access token and expiration time.
 
