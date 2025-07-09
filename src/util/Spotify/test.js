@@ -1,4 +1,3 @@
-// test.js code
 let accessToken = "";
 const clientID = "bff84ea4a997437997b3006fa74d3a8c";
 const redirectUrl = "http://127.0.0.1:3000";
@@ -11,6 +10,8 @@ const generateRandomString = (length) => {
   const values = crypto.getRandomValues(new Uint8Array(length));
   return values.reduce((acc, x) => acc + possible[x % possible.length], "");
 }
+
+const codeVerifier = generateRandomString(64);
 
 const sha256 = (plain) => {
   const encoder = new TextEncoder()
@@ -32,11 +33,11 @@ const Spotify = {
     if (accessToken) return accessToken;
 
     const urlParams = new URLSearchParams(window.location.search);
-    const code = urlParams.get('code');
+    let code = urlParams.get('code');
 
     if (code) {
-      const storedVerifier = localStorage.getItem('code_verifier');
-      console.log("Code Verifier after getting code:", storedVerifier);
+      // stored in the previous step
+      const codeVerifier = localStorage.getItem('code_verifier');
 
       const url = "https://accounts.spotify.com/api/token";
       const payload = {
@@ -49,29 +50,20 @@ const Spotify = {
           grant_type: 'authorization_code',
           code: code,
           redirect_uri: redirectUrl,
-          code_verifier: storedVerifier,
+          code_verifier: codeVerifier,
         }),
-      };
+      }
 
       const body = await fetch(url, payload);
       const response = await body.json();
-      console.log(response);
 
-      if (!response.access_token) {
-        console.error("Token exchange failed:", response);
-        return null;
-      }
+      return response.access_token;
 
-      accessToken = response.access_token;
-      return accessToken;
     }
 
-    // PKCE: generate and store verifier before redirect
-    const newCodeVerifier = generateRandomString(64);
-    localStorage.setItem('code_verifier', newCodeVerifier);
-    console.log("Code Verifier before redirect:", newCodeVerifier);
-
-    const hashed = await sha256(newCodeVerifier);
+    // generated in the previous step
+    window.localStorage.setItem('code_verifier', codeVerifier);
+    const hashed = await sha256(codeVerifier)
     const codeChallenge = base64encode(hashed);
 
     const params = {
@@ -81,12 +73,11 @@ const Spotify = {
       code_challenge_method: 'S256',
       code_challenge: codeChallenge,
       redirect_uri: redirectUrl,
-    };
+    }
 
     authUrl.search = new URLSearchParams(params).toString();
     window.location.href = authUrl.toString();
   },
-
 
   async search(term) {
     accessToken = await this.getAccessToken();
