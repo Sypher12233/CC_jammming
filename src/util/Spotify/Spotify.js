@@ -1,36 +1,96 @@
 let accessToken = "";
-const clientID = "16d9887644e0457db5532ebebd476d30";
-// const redirectUrl = "http://localhost:3000";
-const redirectUrl = "https://syphersjammmingproject.surge.sh";
+const clientID = "bff84ea4a997437997b3006fa74d3a8c";
+const redirectUrl = "http://127.0.0.1:3000";
+// const redirectUrl = "https://syphersjammmingproject.surge.sh";
+
+function generateRandomString(length = 128) {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
+  let str = '';
+  for (let i = 0; i < length; i++) {
+    str += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return str;
+}
+
+async function sha256(plain) {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(plain);
+  const hashBuffer = await window.crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const base64 = btoa(String.fromCharCode(...hashArray));
+  return base64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
 
 const Spotify = {
-  getAccessToken() {
-    // First check for the access token
+  async getAccessToken() {
+    accessToken = localStorage.getItem("access_token");
+    // 70. First, check if accessToken is already set. If yes, return it immediately.
     if (accessToken) return accessToken;
 
-    const tokenInURL = window.location.href.match(/access_token=([^&]*)/);
-    const expiryTime = window.location.href.match(/expires_in=([^&]*)/);
+    // 71. Use URLSearchParams to check if the browser URL contains a valid authorization code. Also check for any error response.
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get("code");
+    const error = urlParams.get("error");
 
-    // Second check for the access token
-    if (tokenInURL && expiryTime) {
-      // setting access token and expiry time variables
-      accessToken = tokenInURL[1];
-      const expiresIn = Number(expiryTime[1]);
+    // 74. If error is found in the URL (e.g., user denied access), log it and return an empty string.
+    if (error) {
+      console.error("Error during authentication:", error);
+      return;
+    }
 
-      // Setting the access token to expire at the value for expiration time
-      window.setTimeout(() => (accessToken = ""), expiresIn * 1000);
-      // clearing the url after the access token expires
-      window.history.pushState("Access token", null, "/");
+    // 72. If code is present, retrieve the stored code_verifier from localStorage. Then make a POST request to Spotify’s /api/token endpoint to exchange the code and verifier for an access token.
+    if (code) {
+      const retreivedCodeVerifier = localStorage.getItem("code_verifier");
+      const response = await fetch("https://accounts.spotify.com/api/token", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({
+          grant_type: "authorization_code",
+          code: code,
+          redirect_uri: redirectUrl,
+          client_id: clientID,
+          code_verifier: retreivedCodeVerifier,
+        })
+      });
+
+      const jsonResponse = await response.json();
+      accessToken = jsonResponse.access_token;
+      localStorage.setItem("access_token", accessToken);
+      const expiresIn = jsonResponse.expires_in;
+
+      // 73. Set a timer to clear the access token when it expires, then clean up the URL to remove the query string.
+      window.setTimeout(() => {
+        accessToken = "";
+        localStorage.removeItem("access_token");
+      }, expiresIn * 1000);
+      window.history.pushState({}, null, "/");
       return accessToken;
     }
 
-    // Third check for the access token if the first and second check are both false
-    const redirect = `https://accounts.spotify.com/authorize?client_id=${clientID}&response_type=token&scope=playlist-modify-public&redirect_uri=${redirectUrl}`;
+    // 75. If no token or code is present, begin the PKCE login process.
+    // First, generate a secure codeVerifier and a hashed codeChallenge.
+    const codeVerifier = generateRandomString(128);
+    const codeChallenge = await sha256(codeVerifier);
+    localStorage.setItem("code_verifier", codeVerifier);
+
+    // 76. Construct the Spotify authorization URL using the code_challenge_method=S256 and the generated codeChallenge.
+    const redirect =
+      `https://accounts.spotify.com/authorize?` +
+      `client_id=${clientID}` +
+      `&response_type=code` +
+      `&redirect_uri=${encodeURIComponent(redirectUrl)}` +
+      `&scope=playlist-modify-public` +
+      `&code_challenge_method=S256` +
+      `&code_challenge=${codeChallenge}`;
+
+    // 77. Redirect the user to Spotify’s authorization page.
     window.location = redirect;
   },
 
-  search(term) {
-    accessToken = Spotify.getAccessToken();
+  async search(term) {
+    accessToken = await Spotify.getAccessToken();
     return fetch(`https://api.spotify.com/v1/search?type=track&q=${term}`, {
       method: "GET",
       headers: { Authorization: `Bearer ${accessToken}` },
@@ -50,9 +110,9 @@ const Spotify = {
       });
   },
 
-  savePlaylist(name, trackUris) {
+  async savePlaylist(name, trackUris) {
     if (!name || !trackUris) return;
-    const aToken = Spotify.getAccessToken();
+    const aToken = await Spotify.getAccessToken();
     const header = { Authorization: `Bearer ${aToken}` };
     let userId;
     return fetch(`https://api.spotify.com/v1/me`, { headers: header })

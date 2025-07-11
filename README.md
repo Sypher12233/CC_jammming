@@ -323,61 +323,148 @@ The HTML and CSS for each of the six components are listed below:
 
 70. Create a directory named `Spotify` at **src/util** and add a file called `Spotify.js`
 
-71. In **Spotify.js** create a **Spotify** module as an empty object. At the bottom of **Spotify.js** export `Spotify`
+    In **Spotify.js** create a **Spotify** module as an empty object. At the bottom of **Spotify.js** export `Spotify`
 
-72. Above the empty object, declare an empty variable that will hold the user's access token.
+71. Above the empty object, declare an empty variable that will hold the user's access token.
 
-73. Inside the `Spotify` module, create a method called `getAccessToken`.
+    Paste these two helper functions in the Spotify.js file, outside the Spotify object.
 
-    Check if the user's access token is already set, if it is, return the value saved to the access Token
+    ```js
+        function generateRandomString(length = 128) {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
+    let str = '';
+    for (let i = 0; i < length; i++) {
+        str += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return str;
+    }
 
-74. If the access token is not already set, check the URL to see if it has just been obtained.
-
-    Since we will be using the [implicit Grant Flow](https://developer.spotify.com/documentation/web-api/tutorials/implicit-flow) to setup a user's account, and make requests.
-
-    **The implicit grant flow returns a user's access token in the URL.**
-
-    Use the following code to parse the URL and set values for your access token and expiration time.
-
-    ```javascript
-    // extract access token from URL
-        window.location.href.match(/access_token=([^&]*)/);
-
-    // extract expiry time from URL
-        window.location.href.match(/expires_in=([^&]*)/);
+    async function sha256(plain) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(plain);
+    const hashBuffer = await window.crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const base64 = btoa(String.fromCharCode(...hashArray));
+    return base64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+    }
     ```
 
-75. If the access token and expiration time are in the URL, implement the following steps:
+    * Inside the `Spotify` module, create a method called `getAccessToken`.
 
-    * Set the access token value
-    * Set a variable for expiration time
-    * Set the access token to expire at the value for expiration time
-    * Clear the parameters from the URL, so the app doesn't try grabbing the access token after it has expired
-    * Return the access token
+    * Add the `async` keyword before the getAccessToken method name because we will need to use `await` with several helper functions during the PKCE flow operations.
 
-76. The last case is that if the access token variable is empty and is not in the URL.
+    * Retreive the `accessToken` from `localStorage` using the following code and save it to `accessToken`
 
-    Before you write this conditional code block, you need to register your application using the Spotify [application registration flow](https://developer.spotify.com/documentation/web-api/concepts/apps).
+        ```js
+        accessToken = localStorage.getItem("access_token");
+        ```
+
+    * Check if the user's access token is already set, if it is, return the value saved to the access Token
+
+72. If the access token is not already set, check the URL to see if the user has just been redirected back from Spotify with an authorization code.
+
+    Use the following code to extract the code from the URL:
+
+    ```js
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get("code");
+    const error = urlParams.get("error");
+    ```
+
+73. If the authorization `code` exists, it means the user has successfully logged in and authorized the app. Use it to request an access token from Spotify by implement the following steps:
+
+    * Retrieve the `code_verifier` from localStorage (we will generate this after this code block).
+
+    Send a POST request to <https://accounts.spotify.com/api/token> with:
+    * grant_type set to authorization_code
+    * the code, client_id, redirect_uri, and codeVerifier
+
+    use the [official spotify documentation](https://developer.spotify.com/documentation/web-api) page for the url and sample requests
+
+    ![spotify-web-api-example](./public/spotify-web-api.png)
+
+    Example:
+
+    ```js
+      const response = await fetch("<url>", {
+        method: "POST",
+        headers: {
+          "<necessary-headers>"
+        },
+        body: new URLSearchParams({
+          grant_type: "authorization_code",
+          <!-- other paramters -->
+        })
+      });
+    ```
+
+74. After the fetch method, parse the response variable as json using the `.json()` method and save it to a new variable ie: jsonResponse.
+
+    Extract the access token from the `jsonResponse` and store it in localStorage using the `.setItem` method of localStorage
+
+75. Set an expiration timer and clear the URL query parameters
+
+    Then return the access token
+
+    ```js
+    window.setTimeout(() => {
+        accessToken = "";
+        localStorage.removeItem("access_token");
+    }, expiresIn * 1000);
+
+    window.history.pushState({}, null, "/");
+    return accessToken;
+    ```
+
+76. (optional) If an error is present in the URL (e.g. the user denied the request), log the error and stop further execution.
+
+77. If neither an access token nor a code is available, begin the PKCE authorization process by implementing the following steps:
+
+    * generate a random `codeVerifier` using the `genrateRandomString()` helper function.
+    * derive a hash of `codeVerifier` and assign it to `codeChallenge` by `await`ing the `sha256()` helper function.
+    * store the value of `codeVerifier` as 'code_verifier' in localStorage so that we are able to use it even after redirects.
+
+    ```js
+    const codeVerifier = helperFunction();
+    const codeChallenge = await sha256(codeVerifier);
+    localStorage.setItem("code_verifier", value);
+    ```
+
+    Before continuing, you need to register your application using the Spotify [application registration flow](https://developer.spotify.com/documentation/web-api/concepts/apps).
 
     Give your application a relevant **name** and **description**. Also, add the following Redirect URI:
 
     ```url
     http://localhost:3000
+    or
+    http://127.0.0.1:3000
     ```
 
-77. At the top of `Spotify.js` create *constant variables* for your application's `client ID` and `redirect URI`.
+78. At the top of your Spotify.js file, define constant variables for your client ID and redirect URI.
 
-    Set the `client ID` variable to the value provided on your application page.
-
-    Set the `redirect URI` to `http://locolhost:3000`
-
-78. Back in your conditional statement, redirect users to the following URL:
-
-    ```url
-    https://accounts.spotify.com/authorize?client_id=CLIENT_ID&response_type=token&scope=playlist-modify-public&redirect_uri=REDIRECT_URI
+    ```js
+    const clientID = "your-client-id";
+    const redirectUrl = "http://localhost:3000";
     ```
 
-    Interpolate your `client ID` and `redirect URI` variables In place of `CLIENT_ID` and `REDIRECT_URI`.
+    Also construct the Spotify authorization URL using the required query parameters for PKCE:
+
+    ```js
+    const redirect =
+    `https://accounts.spotify.com/authorize?` +
+    `client_id=${clientID}` +
+    `&response_type=code` +
+    `&redirect_uri=${encodeURIComponent(redirectUrl)}` +
+    `&scope=playlist-modify-public` +
+    `&code_challenge_method=S256` +
+    `&code_challenge=${codeChallenge}`;
+    ```
+
+    After that redirect the user to the Spotify authorization page to begin the login flow.
+
+    ```js
+    window.location = redirect;
+    ```
 
     > Section 11. Implement Spotify Search Request
 
@@ -389,9 +476,11 @@ The HTML and CSS for each of the six components are listed below:
 
     Use the Spotify Web [API Endpoint Reference](https://developer.spotify.com/documentation/web-api/reference/search) to help format your request.
 
-80. In the Spotify object, add a method called `search` that accepts a parameter for the user' search term.
+80. In the Spotify object, add a method called `search` that accepts a parameter for the user's search term.
 
-    `search()` returns a promise that will eventually resolve to the list of tracks from the search.
+    Add the `async` keyword before the search methods name. `search()` returns a promise that will eventually resolve to the list of tracks from the search.
+
+    Retreive the value of the `accessToken` and save it to a variable, don't forget to `await` for the getAccessMethod().
 
 81. Inside `search()`, start the promise chain by returning a `GET` request (using `fetch()`) to the following Spotify endpoint:
 
@@ -435,11 +524,13 @@ The HTML and CSS for each of the six components are listed below:
 
 85. Create a method in `Spotify.js` that accepts two arguments. The first argument is the name of the playlist. The second is an array of track URIs.
 
+    Add the `async` keyword before the methods name, as we will be awaiting the result of the getAccessToken() method.
+
     Inside the function, check if there are values saved to the methods two arguments. If not, return.
 
 86. Create three default variables:
 
-    * An access token variable, set to the current user's access token
+    * An access token variable, set to the current user's access token (don't forget the `await` keyword)
     * A headers variable, set to an object with an **Authorization** parameter containing the user's access token in the implicit grant flow request format
     * An empty variable for the user's Id
 
