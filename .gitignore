@@ -21,3 +21,24 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Environment
+.env
+
+# System
+.AppleDouble
+.LSOverride
+
+# Editor settings
+.vscode/
+.idea/
+*.swp
+*.swo
+*.code-workspace
+
+# Test artifacts
+*.snap
+
+# Other build outputs/logs
+/dist
+*.log
