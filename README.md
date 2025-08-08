@@ -319,7 +319,7 @@ The HTML and CSS for each of the six components are listed below:
 
     In this assessment, you wil register a Spotify application and create a method called `getAccessToken` in the Spotify module. The method will get a user's access token so that they can make requests to the Spotify API.
 
-    Use the Spotify [Applications Registration Flow](https://developer.spotify.com/documentation/web-api/concepts/apps) and [Spotify Authentication guide](https://developer.spotify.com/documentation/web-api/concepts/authorization) to help you write the method.
+    You can also use the Spotify [Applications Registration Flow](https://developer.spotify.com/documentation/web-api/concepts/apps) and [Spotify Authentication guide](https://developer.spotify.com/documentation/web-api/concepts/authorization) to help you write the method.
 
 70. Create a directory named `Spotify` at **src/util** and add a file called `Spotify.js`
 
@@ -350,20 +350,8 @@ The HTML and CSS for each of the six components are listed below:
     ```
 
     * Inside the `Spotify` module, create a method called `getAccessToken`.
-
     * Add the `async` keyword before the getAccessToken method name because we will need to use `await` with several helper functions during the PKCE flow operations.
-
-    * Retreive the `accessToken` & token expiry time from `localStorage` using the following code and save it to `accessToken` and `expiry`
-    * Make sure that you check that
-        * the `accessToken` & `expiry` are both `true`
-        * the expiry time is not more than the value of `Date.now()`
-    * If this is not the case, remove both of them from localStorage by using the `.removeItem()` method
-
-        ```js
-        accessToken = localStorage.getItem("access_token");
-        expiry = localStorage.getItem("expires_in");
-        if (expiry && Date.now() < Number(expiry)) ...
-        ```
+    * Verify whether the `accessToken` is `true`; if it is, `return` it immediately.
 
 72. If the access token is not already set, check the URL to see if the user has just been redirected back from Spotify with an authorization code.
 
@@ -375,13 +363,13 @@ The HTML and CSS for each of the six components are listed below:
     const error = urlParams.get("error");
     ```
 
-73. If the authorization `code` exists, it means the user has successfully logged in and authorized the app. Use it to request an access token from Spotify by implement the following steps:
+73. If the authorization `code` exists, it means the user has successfully logged in and authorized the app. Use it to request an access token from Spotify by implementing the following steps:
 
-    * Retrieve the `code_verifier` from localStorage (we will generate this after this code block).
+    * Retrieve the `code_verifier` from localStorage (we will generate the `code_verifier` after this code block).
 
     Send a POST request to <https://accounts.spotify.com/api/token> with:
-    * grant_type set to authorization_code
-    * the code, client_id, redirect_uri, and codeVerifier
+    * **grant_type** set to *authorization_code*
+    * the **code**, **client_id**, **redirect_uri**, and **codeVerifier**
 
     use the [official spotify documentation](https://developer.spotify.com/documentation/web-api) page for the url and sample requests
 
@@ -408,16 +396,25 @@ The HTML and CSS for each of the six components are listed below:
 
 75. Set an expiration timer and clear the URL query parameters
 
-    Then return the access token
+    Then return the `accessToken`
 
     ```js
-    // extract the expiry value from the response
+    // extract the expiry value from the response and then set a timer to reset the accessToken after it has expired.
     const expiresIn = jsonResponse.expires_in;
 
     const now = new Date();
     const expiry = new Date(now.getTime() + (expires_in * 1000));
     localStorage.setItem('expires', expiry);
 
+    setTimeout(() => {
+            localStorage.removeItem("access_token");
+            localStorage.removeItem("token_expiry");
+            accessToken = "";
+            console.log("Access token expired and removed.");
+        }, expiresIn * 1000);
+
+    // Clean up the URL by removing query parameters to prevent re-processing the authorization code on page reload
+    // if (code) {}
     window.history.pushState({}, null, "/");
     return accessToken;
     ```
@@ -426,9 +423,9 @@ The HTML and CSS for each of the six components are listed below:
 
 77. If neither an access token nor a code is available, begin the PKCE authorization process by implementing the following steps:
 
-    * generate a random `codeVerifier` using the `genrateRandomString()` helper function.
-    * derive a hash of `codeVerifier` and assign it to `codeChallenge` by `await`ing the `sha256()` helper function.
-    * store the value of `codeVerifier` as 'code_verifier' in localStorage so that we are able to use it even after redirects.
+    * generate a random **codeVerifier** using the `genrateRandomString()` helper function.
+    * derive a hash of **codeVerifier** and assign it to `codeChallenge` by `await`ing the `sha256()` helper function.
+    * store the value of **codeVerifier** as `'code_verifier'` in localStorage so that we are able to use it even after redirects.
 
     ```js
     const codeVerifier = helperFunction();
@@ -441,29 +438,29 @@ The HTML and CSS for each of the six components are listed below:
     Give your application a relevant **name** and **description**. Also, add the following Redirect URI:
 
     ```url
-    http://localhost:3000
-    or
     http://127.0.0.1:3000
+    <!-- or any port that your app listens on -->
+    <!-- default is 3000 -->
     ```
 
 78. At the top of your Spotify.js file, define constant variables for your client ID and redirect URI.
 
     ```js
     const clientID = "your-client-id";
-    const redirectUrl = "http://localhost:3000";
+    const redirectUrl = "http://127.0.0.1:3000";
     ```
 
     Also construct the Spotify authorization URL using the required query parameters for PKCE:
 
     ```js
     const redirect =
-    `<spotify-auth-uri>?` +
-    `client_id=<your-client-id>` +
+    `    <spotify-auth-uri>?    ` +
+    `client_id=    <your-client-id>    ` +
     `&response_type=code` +
-    `&redirect_uri=${encodeURIComponent(<redirectUrl>)}` +
+    `&redirect_uri=${encodeURIComponent(    <redirectUrl>    )}` +
     `&scope=playlist-modify-public` +
     `&code_challenge_method=S256` +
-    `&code_challenge=<your-code-challenge>`;
+    `&code_challenge=    <your-code-challenge>    `;
     ```
 
     After that redirect the user to the Spotify authorization page to begin the login flow.

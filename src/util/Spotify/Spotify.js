@@ -24,34 +24,21 @@ async function sha256(plain) {
 
 const Spotify = {
   async getAccessToken() {
-    accessToken = localStorage.getItem("access_token");
-    const expiry = localStorage.getItem("token_expiry");
-    console.log("Checking token expiry:", expiry);
-    console.log(expiry && Date.now() < Number(expiry));
-    // First, check if accessToken is already set and return it.
-    if (expiry && Date.now() < Number(expiry)) {
-      // token is still valid
-      return accessToken;
-    } else {
-      // token is not valid, remove it from localStorage
-      localStorage.removeItem("access_token");
-      localStorage.removeItem("token_expiry");
-      accessToken = "";
-    }
-
+    // Check if the access token is already set.
+    if (accessToken) return accessToken;
 
     // Use URLSearchParams to check if the browser URL contains a valid authorization code. Also check for any error response.
     const urlParams = new URLSearchParams(window.location.search);
     const code = urlParams.get("code");
     const error = urlParams.get("error");
 
-    // If error is found in the URL (e.g., user denied access), log it and return an empty string.
+    // If error is found in the URL (e.g., user denied access), log it and return.
     if (error) {
       console.error("Error during authentication:", error);
       return;
     }
 
-    // If code is present, retrieve the stored code_verifier from localStorage. Then make a POST request to Spotify’s /api/token endpoint to exchange the code and verifier for an access token.
+    // If code is present in the URL, retrieve the stored code_verifier from localStorage. Then make a POST request to Spotify’s /api/token endpoint to exchange the code and verifier for an access token.
     if (code) {
       const retreivedCodeVerifier = localStorage.getItem("code_verifier");
       const response = await fetch("https://accounts.spotify.com/api/token", {
@@ -79,6 +66,14 @@ const Spotify = {
       const expiry = new Date(now.getTime() + (expiresIn * 1000));
       localStorage.setItem('token_expiry', expiry);
       console.log("Token expiry in code:", localStorage.getItem("token_expiry"));
+
+      // Ensure that the token is automatically cleared from memory and localStorage when it expires, using setTimeout().
+      setTimeout(() => {
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("token_expiry");
+        accessToken = "";
+        console.log("Access token expired and removed.");
+      }, expiresIn * 1000);
 
       window.history.pushState({}, null, "/");
       return accessToken;
