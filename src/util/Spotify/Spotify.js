@@ -82,10 +82,8 @@ const Spotify = {
     // If no token or code is present, begin the PKCE login process.
     // First, generate a secure codeVerifier and a hashed codeChallenge.
     const codeVerifier = generateRandomString(128);
-    console.log("Generated codeVerifier in code:", codeVerifier);
     const codeChallenge = await sha256(codeVerifier);
     localStorage.setItem("code_verifier", codeVerifier);
-    console.log("Generated codeVerifier in localStorage:", localStorage.getItem("code_verifier"));
 
     // Construct the Spotify authorization URL using the code_challenge_method=S256 and the generated codeChallenge.
     const redirect =

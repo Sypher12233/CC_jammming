@@ -321,6 +321,8 @@ The HTML and CSS for each of the six components are listed below:
 
     You can also use the Spotify [Applications Registration Flow](https://developer.spotify.com/documentation/web-api/concepts/apps) and [Spotify Authentication guide](https://developer.spotify.com/documentation/web-api/concepts/authorization) to help you write the method.
 
+    > Note: We will be impliminting the PKCE authorization flow
+
 70. Create a directory named `Spotify` at **src/util** and add a file called `Spotify.js`
 
     In **Spotify.js** create a **Spotify** module as an empty object. At the bottom of **Spotify.js** export `Spotify`
